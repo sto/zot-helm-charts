@@ -35,6 +35,11 @@ spec:
             - name: zot
               containerPort: 5000
               protocol: TCP
+          {{- if .Values.persistence }}
+          volumeMounts:
+            - mountPath: '/var/lib/registry'
+              name: {{ .Release.Name }}-volume
+          {{- end }}
           livenessProbe:
             httpGet:
               path: /v2/
@@ -45,6 +50,12 @@ spec:
               port: 5000
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+      {{- if .Values.persistence }}
+      volumes:
+        - name: {{ .Release.Name }}-volume
+          persistentVolumeClaim:
+            claimName: {{ .Values.pvc.name | default (printf "%s-pvc" .Release.Name) }}
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
